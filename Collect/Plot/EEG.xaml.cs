@@ -321,7 +321,6 @@ namespace Collect.Plot
         }
 
 
-
         int buffer_index = 0;
         double[][] save_data_buffer = new double[500][];
         double[][] save_data_buffer_original = new double[500][];
@@ -366,17 +365,15 @@ namespace Collect.Plot
 
         // 频谱分析相关
         private PowerSpectralDensityAnalyzer psdAnalyzer;
-        private string[] channelNames = { "Ch1", "Ch2", "Ch3", "Ch4", "Ch5", "Ch6", "Ch7", "Ch8" };
-        private int spectrumAnalysisCounter = 0;
-        private const int SPECTRUM_ANALYSIS_INTERVAL = 10; // 每10个数据包进行一次频谱分析
+       
 
         
         static string filename = Directory.GetCurrentDirectory();
         string originalDataFile = System.IO.Path.Combine(filename, "Original_data.txt");
-        private bool enableFIRFilter = true;
+      
 
         //工频干扰
-        static double sampleRate = 500;
+        //static double sampleRate = 500;
         static double notchFreg = 50;
         static double notchBandwidth = 2;
 
@@ -384,49 +381,91 @@ namespace Collect.Plot
         static double fLow = notchFreg - notchBandwidth;
         static double fHigh = notchFreg + notchBandwidth;
 
-        OnlineFilter notchFilter = OnlineFirFilter.CreateBandstop(
-            ImpulseResponse.Finite,
-            sampleRate,
-            fLow,
-            fHigh,
-            256
-        );
+       
         static string filename1 = Directory.GetCurrentDirectory();
         static double hpCut_save = 0.016;
         static double hpCut_show = 0.5;
         // 截止频率（-3 dB）
-        static double hpA_save = Math.Exp(-2.0 * Math.PI * hpCut_save / sampleRate); // α = e^{-2π fc / fs}
-        static double hpA_show = Math.Exp(-2.0 * Math.PI * hpCut_show / sampleRate); // α = e^{-2π fc / fs}
-        double[] hp1_prevX_show = new double[8];
-        double[] hp1_prevY_show = new double[8];
+        //static double hpA_save = Math.Exp(-2.0 * Math.PI * hpCut_save / sampleRate); // α = e^{-2π fc / fs}
+       
         double[] hp1_prevX_save = new double[8];
         double[] hp1_prevY_save = new double[8];
-        double[] hp2_prevX = new double[8];
-        double[] hp2_prevY = new double[8];
+        //double[] hp2_prevX = new double[8];
+        //double[] hp2_prevY = new double[8];
 
-        // —— 新增：低通 40 Hz（两级）——
-        static double lpCut = 30.0;   // 低通截止
-        static double lpQ = 1.0 / Math.Sqrt(2.0); // 二阶巴特沃斯
-        BiquadLPF[] lpf1 = Enumerable.Range(0, 8).Select(_ => new BiquadLPF(sampleRate, lpCut, lpQ)).ToArray();
-        BiquadLPF[] lpf2 = Enumerable.Range(0, 8).Select(_ => new BiquadLPF(sampleRate, lpCut, lpQ)).ToArray();
-        BiquadLPF[] lpf3 = Enumerable.Range(0, 8).Select(_ => new BiquadLPF(sampleRate, lpCut, lpQ)).ToArray();
+        //// —— 新增：低通 40 Hz（两级）——
+        //static double lpCut = 30.0;   // 低通截止
+        //static double lpQ = 1.0 / Math.Sqrt(2.0); // 二阶巴特沃斯
+        //BiquadLPF[] lpf1 = Enumerable.Range(0, 8).Select(_ => new BiquadLPF(sampleRate, lpCut, lpQ)).ToArray();
+        //BiquadLPF[] lpf2 = Enumerable.Range(0, 8).Select(_ => new BiquadLPF(sampleRate, lpCut, lpQ)).ToArray();
+        //BiquadLPF[] lpf3 = Enumerable.Range(0, 8).Select(_ => new BiquadLPF(sampleRate, lpCut, lpQ)).ToArray();
 
         // —— 新增：5 点中值滤波的缓冲与指针（每通道各一组）——
-        double[][] medBuf = Enumerable.Range(0, 8).Select(_ => new double[5]).ToArray();
-        int[] medCount = new int[8];   // 已填数量（≤5）
-        int[] medIdx = new int[8];   // 写指针 0..4
+        //double[][] medBuf = Enumerable.Range(0, 8).Select(_ => new double[5]).ToArray();
+        //int[] medCount = new int[8];   // 已填数量（≤5）
+        //int[] medIdx = new int[8];   // 写指针 0..4
 
         // 每个通道独立的一对notch（你已有）
         static double f0 = 50.0;     // 60Hz 电网改成 60
         static double Q = 35.0;     // 30~40 之间调，Q 越大陷波越窄
-        BiquadNotch[] notch1 = Enumerable.Range(0, 8).Select(_ => new BiquadNotch(sampleRate, f0, Q)).ToArray();
-        BiquadNotch[] notch2 = Enumerable.Range(0, 8).Select(_ => new BiquadNotch(sampleRate, f0, Q)).ToArray();
+        //BiquadNotch[] notch1 = Enumerable.Range(0, 8).Select(_ => new BiquadNotch(sampleRate, f0, Q)).ToArray();
+        //BiquadNotch[] notch2 = Enumerable.Range(0, 8).Select(_ => new BiquadNotch(sampleRate, f0, Q)).ToArray();
 
-        //// 创建 FIR 滤波器实例
-        string originalDataFile1 = System.IO.Path.Combine(filename1, "Original_data.txt");
+       
         int index= 0;
 
+        /// <summary>
+        /// 修改滤波顺序
+        /// </summary>
+        /// <param name="ch"></param>
+        /// <param name="x"></param>
+        /// <returns></returns>
+        static double sampleRate = 500;
 
+        static double hpCut = 0.5;   // 高通截止 0.5 Hz
+        static double hpA = Math.Exp(-2.0 * Math.PI * hpCut / sampleRate);
+
+        static double lpCut = 40.0;  // 低通截止 40 Hz
+        // 4阶 Butterworth 两段二阶的 Q（固定值）
+        static double lpQ1 = 0.5411961;
+        static double lpQ2 = 1.3065630;
+
+        static double notchF0 = 50.0;
+        static double notchQ = 25.0;  // 约等于 BW=2Hz 的量级（可按需要微调）
+
+        // ===== 状态（8通道）=====
+        double[] hp1_prevX = new double[8];
+        double[] hp1_prevY = new double[8];
+        double[] hp2_prevX = new double[8];
+        double[] hp2_prevY = new double[8];
+
+        double[][] medBuf = Enumerable.Range(0, 8).Select(_ => new double[5]).ToArray();
+        int[] medCount = new int[8];
+        int[] medIdx = new int[8];
+
+        BiquadLPF[] lpf1 = Enumerable.Range(0, 8).Select(_ => new BiquadLPF(sampleRate, lpCut, lpQ1)).ToArray();
+        BiquadLPF[] lpf2 = Enumerable.Range(0, 8).Select(_ => new BiquadLPF(sampleRate, lpCut, lpQ2)).ToArray();
+        BiquadNotch[] notch1;
+
+        void ResetFilterState(int chCount)
+        {
+            // 1) 高通状态清零
+            Array.Clear(hp1_prevX, 0, hp1_prevX.Length);
+            Array.Clear(hp1_prevY, 0, hp1_prevY.Length);
+            Array.Clear(hp2_prevX, 0, hp2_prevX.Length);
+            Array.Clear(hp2_prevY, 0, hp2_prevY.Length);
+
+            // 2) 中值滤波状态清零
+            for (int ch = 0; ch < chCount; ch++)
+            {
+                Array.Clear(medBuf[ch], 0, medBuf[ch].Length);
+                medCount[ch] = 0;
+                medIdx[ch] = 0;
+            }
+
+            notch1 = Enumerable.Range(0, chCount).Select(_ => new BiquadNotch(sampleRate, notchF0, notchQ)).ToArray();
+
+        }
         double Median5_Update(int ch, double x)
         {
             var buf = medBuf[ch];
@@ -434,14 +473,31 @@ namespace Collect.Plot
             medIdx[ch] = (medIdx[ch] + 1) % 5;
             if (medCount[ch] < 5) medCount[ch]++;
 
-            // 拷贝已填元素并求中值
             int n = medCount[ch];
-            if (n == 1) return x; // 初始化前期
+            if (n <= 1) return x;
+
+            // 注意：环形缓冲直接Copy会乱序，但中值不依赖顺序，只依赖集合，因此可直接复制前n个“已写入的元素”
+            // 为了更严谨：复制全5个再取前n个非0也行；这里用简单实现
             double[] w = new double[n];
             Array.Copy(buf, w, n);
-            Array.Sort(w, 0, n);
+            Array.Sort(w);
             return w[n / 2];
         }
+        //double Median5_Update(int ch, double x)
+        //{
+        //    var buf = medBuf[ch];
+        //    buf[medIdx[ch]] = x;
+        //    medIdx[ch] = (medIdx[ch] + 1) % 5;
+        //    if (medCount[ch] < 5) medCount[ch]++;
+
+        //    // 拷贝已填元素并求中值
+        //    int n = medCount[ch];
+        //    if (n == 1) return x; // 初始化前期
+        //    double[] w = new double[n];
+        //    Array.Copy(buf, w, n);
+        //    Array.Sort(w, 0, n);
+        //    return w[n / 2];
+        //}
         void uav_control_CmdEvent(object sender, EcgTCPEventArgs e)
         {
             Numeeg += 33;
@@ -454,32 +510,57 @@ namespace Collect.Plot
             {
                 double temp = (Convert.ToDouble(eeg_data_float[i]));
 
+
+                // ① 前置：5点中值去尖峰（防振铃）
+                double med = Median5_Update(i, temp);
+                double x = (Math.Abs(temp - med) > 800) ? med : temp;
                 // --- 第1级 一阶高通：去基线漂移 ---
-                double yhp1 = hpA_save * (hp1_prevY_save[i] + temp - hp1_prevX_save[i]);
-                hp1_prevX_save[i] = temp;
-                hp1_prevY_save[i] = yhp1;
+                double yhp1 = hpA * (hp1_prevY[i] + x - hp1_prevX[i]);
+                hp1_prevX[i] = x;
+                hp1_prevY[i] = yhp1;
 
                 // --- 第2级 一阶高通：进一步增强滚降 ---
-                double yhp2 = hpA_save * (hp2_prevY[i] + yhp1 - hp2_prevX[i]);
+                double yhp2 = hpA * (hp2_prevY[i] + yhp1 - hp2_prevX[i]);
                 hp2_prevX[i] = yhp1;
                 hp2_prevY[i] = yhp2;
 
-
-                // --- 50 Hz 双级陷波 ---
+                // --- 50 Hz 双级陷波1级 ---
                 double y1 = notch1[i].Process(yhp2);
-                double y2 = notch2[i].Process(y1);
+                //double y2 = notch2[i].Process(y1);
 
 
                 //---新增：40 Hz 低通（两级，等效4阶） ---
-                double ylp1 = lpf1[i].Process(y2);
+                double ylp1 = lpf1[i].Process(y1);
                 double ylp2 = lpf2[i].Process(ylp1);
-                double ylp3 = lpf3[i].Process(ylp2);
 
 
-                //---新增：5点中值去尖峰（实时） ---
-                double filterdata = Median5_Update(i, ylp3);
+                //// --- 第1级 一阶高通：去基线漂移 ---
+                //double yhp1 = hpA_save * (hp1_prevY_save[i] + temp - hp1_prevX_save[i]);
+                //hp1_prevX_save[i] = temp;
+                //hp1_prevY_save[i] = yhp1;
 
+                //// --- 第2级 一阶高通：进一步增强滚降 ---
+                //double yhp2 = hpA_save * (hp2_prevY[i] + yhp1 - hp2_prevX[i]);
+                //hp2_prevX[i] = yhp1;
+                //hp2_prevY[i] = yhp2;
+
+
+                //// --- 50 Hz 双级陷波 ---
+                //double y1 = notch1[i].Process(yhp2);
+                //double y2 = notch2[i].Process(y1);
+
+
+                ////---新增：40 Hz 低通（两级，等效4阶） ---
+                //double ylp1 = lpf1[i].Process(y2);
+                //double ylp2 = lpf2[i].Process(ylp1);
+                //double ylp3 = lpf3[i].Process(ylp2);
+
+
+                ////---新增：5点中值去尖峰（实时） ---
+                //double filterdata = Median5_Update(i, ylp3);
+                double filterdata = ylp2;
                 eeg_data_buffer[i][buffer_index] = filterdata;
+                //eeg_data_buffer[i][buffer_index] = filterdata;
 
                 if (index >= 1000)
                 {
@@ -763,9 +844,6 @@ namespace Collect.Plot
             {
                 string filePath = saveFileDialog.FileName;
                 ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
-
-
-             
 
                 using (var package = new ExcelPackage(filePath))
                 {
