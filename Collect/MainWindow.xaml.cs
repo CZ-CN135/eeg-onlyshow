@@ -8,6 +8,7 @@ using System.IO.Ports;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Xceed.Wpf.AvalonDock.Layout;
 
 namespace Collect
@@ -37,18 +38,31 @@ namespace Collect
             eeg=new Plot.EEG();
             eeg_pro = new Plot.EEG_Pro(eeg);
             eeg_filter = new Plot.EEG_Filter(eeg);
+
             //tcp
             btn_save = new System.Windows.Controls.Button();
-            btn_save.Content = "保存原始数据";
+            btn_save.Content = "保存滤波ns2数据";
             btn_save.FontSize = 15;
             btn_save.Margin = new Thickness(0, 10, 0, 0);
-            btn_save.Click += Btn_save_Click;
+            btn_save.Click += Btn_save_filter_filter_Click;
+
+            btn_save_filter_excel = new System.Windows.Controls.Button();
+            btn_save_filter_excel.Content = "保存滤波Excel数据";
+            btn_save_filter_excel.FontSize = 15;
+            btn_save_filter_excel.Margin= new Thickness(0, 10, 0, 0);
+            btn_save_filter_excel.Click += Btn_save_filter_excel_Click;
+
+            btn_save_filter_ns2 = new System.Windows.Controls.Button();
+            btn_save_filter_ns2.Content = "保存原始ns2数据";
+            btn_save_filter_ns2.FontSize = 15;
+            btn_save_filter_ns2.Margin = new Thickness(0, 10, 0, 0);
+            btn_save_filter_ns2.Click += Btn_save_original_ns2_Click;
 
             btn_save_filter = new System.Windows.Controls.Button();
-            btn_save_filter.Content = "保存滤波数据";
+            btn_save_filter.Content = "保原始Excel数据";
             btn_save_filter.FontSize = 15;
             btn_save_filter.Margin = new Thickness(0, 10, 0, 0);
-            btn_save_filter.Click += Btn_save_filter_Click;
+            btn_save_filter.Click += Btn_save_original_excel_Click;
 
             btn_clear = new System.Windows.Controls.Button();
             btn_clear.Content = "清除";
@@ -135,22 +149,26 @@ namespace Collect
             stackpanel1.Children.Add(PGAbox);
             stackpanel1.Children.Add(btn_tcp);
             stackpanel1.Children.Add(btn_save);
+            stackpanel1.Children.Add(btn_save_filter_excel);
+            stackpanel1.Children.Add(btn_save_filter_ns2);
             stackpanel1.Children.Add(btn_save_filter);
             stackpanel1.Children.Add(btn_clear);
 
-
             //com
             btn_save_com = new System.Windows.Controls.Button();
-            btn_save_com.Content = "保存原始数据";
+            btn_save_com.Content = "保存原始曲线数据";
             btn_save_com.FontSize = 15;
             btn_save_com.Margin = new Thickness(0, 10, 0, 0);
-            btn_save_com.Click += Btn_save_Click;
+           
+
+       
 
             btn_save_filter_com = new System.Windows.Controls.Button();
             btn_save_filter_com.Content = "保存滤波数据";
             btn_save_filter_com.FontSize = 15;
             btn_save_filter_com.Margin = new Thickness(0, 10, 0, 0);
-            btn_save_filter_com.Click += Btn_save_filter_Click;
+
+
 
             btn_clear_com = new System.Windows.Controls.Button();
             btn_clear_com.Content = "清除";
@@ -279,70 +297,82 @@ namespace Collect
             Freqtextbox_filter.FontSize = 15;
             stackpanel4.Children.Add(Freqtextbox_filter);
 
+            //stackpanel4.Children.Add(new TextBlock
+            //{
+            //    FontSize = 15,
+            //    Text = "阶数"
+            //});
 
-            stackpanel4.Children.Add(new TextBlock
-            {
-                FontSize = 15,
-                Text = "阶数"
-            });
+            //Ordertextbox_filter = new System.Windows.Controls.TextBox();
+            //Ordertextbox_filter.Text = "4";
+            //Ordertextbox_filter.FontSize = 15;
+            //stackpanel4.Children.Add(Ordertextbox_filter);
 
-            Ordertextbox_filter = new System.Windows.Controls.TextBox();
-            Ordertextbox_filter.Text = "4";
-            Ordertextbox_filter.FontSize = 15;
-            stackpanel4.Children.Add(Ordertextbox_filter);
+            //stackpanel4.Children.Add(new TextBlock
+            //{
+            //    FontSize = 15,
+            //    Text = "截止频率(Hz)"
+            //});
 
-            stackpanel4.Children.Add(new TextBlock
-            {
-                FontSize = 15,
-                Text = "截止频率(Hz)"
-            });
-
-            EndFreqtextbox_filter_com = new System.Windows.Controls.TextBox();
-            EndFreqtextbox_filter_com.Text = "50";
-            EndFreqtextbox_filter_com.FontSize = 15;
-            stackpanel4.Children.Add(EndFreqtextbox_filter_com);
+            //EndFreqtextbox_filter_com = new System.Windows.Controls.TextBox();
+            //EndFreqtextbox_filter_com.Text = "50";
+            //EndFreqtextbox_filter_com.FontSize = 15;
+            //stackpanel4.Children.Add(EndFreqtextbox_filter_com);
             
             btn_filter = new System.Windows.Controls.Button();
-            btn_filter.Content = "开始";
+            btn_filter.Content = "读取数据";
             btn_filter.FontSize = 15;
             btn_filter.Margin = new Thickness(0, 10, 0, 0);
             btn_filter.Click += Btn_filter_Click;
             stackpanel4.Children.Add(btn_filter);
 
-            btn_clear_original_filter_txt = new System.Windows.Controls.Button();
-            btn_clear_original_filter_txt.Content = "清除文本数据";
-            btn_clear_original_filter_txt.FontSize = 15;
-            btn_clear_original_filter_txt.Margin = new Thickness(0, 10, 0, 0);
-            btn_clear_original_filter_txt.Click += Btn_clear_original_filter_txt_Click;
-            stackpanel4.Children.Add(btn_clear_original_filter_txt);
+            btn_save_offline = new System.Windows.Controls.Button();
+            btn_save_offline.Content = "保存滤波数据";
+            btn_save_offline.FontSize = 15;
+            btn_save_offline.Margin = new Thickness(0, 10, 0, 0);
+            btn_save_offline.Click += Btn_save_offline_Click; ;
+            stackpanel4.Children.Add(btn_save_offline);
 
+            //btn_clear_original_filter_txt = new System.Windows.Controls.Button();
+            //btn_clear_original_filter_txt.Content = "清除文本数据";
+            //btn_clear_original_filter_txt.FontSize = 15;
+            //btn_clear_original_filter_txt.Margin = new Thickness(0, 10, 0, 0);
+            //btn_clear_original_filter_txt.Click += Btn_clear_original_filter_txt_Click;
+            //stackpanel4.Children.Add(btn_clear_original_filter_txt);
+
+        }
+
+        private void Btn_save_offline_Click(object sender, RoutedEventArgs e)
+        {
+            eeg_filter.save_offline(data);
         }
 
         private void Btn_clear_original_filter_txt_Click(object sender, RoutedEventArgs e)
         {
             eeg_filter.clear_original_filter_txt_flag=true;
         }
-
+        double[][] data; 
         //开始滤波
         private void Btn_filter_Click(object sender, RoutedEventArgs e)
         {
-            var button = sender as Button;
-            var content = button.Content.ToString();
-            if (content == "开始")
-            {
-                eeg_filter.IsFilter = true;
-                eeg_filter.Freq = int.Parse(Freqtextbox_filter.Text);
-                eeg_filter.Order = int.Parse(Ordertextbox_filter.Text);
-                eeg_filter.EndFreq = int.Parse(EndFreqtextbox_filter_com.Text);
-                NlogHelper.WriteInfoLog("滤波参数已就绪，开始滤波");
-                button.Content = "结束";
-            }
-            else
-            {
-                eeg_filter.IsFilter = false;
-                NlogHelper.WriteWarnLog("停止滤波");
-                button.Content = "开始";
-            }
+            data=eeg_filter.LoadExcelAs2DArray(Freqtextbox_filter.Text);
+            //var button = sender as Button;
+            //var content = button.Content.ToString();
+            //if (content == "开始")
+            //{
+            //    eeg_filter.IsFilter = true;
+            //    eeg_filter.Freq = int.Parse(Freqtextbox_filter.Text);
+            //    eeg_filter.Order = int.Parse(Ordertextbox_filter.Text);
+            //    eeg_filter.EndFreq = int.Parse(EndFreqtextbox_filter_com.Text);
+            //    NlogHelper.WriteInfoLog("滤波参数已就绪，开始滤波");
+            //    button.Content = "结束";
+            //}
+            //else
+            //{
+            //    eeg_filter.IsFilter = false;
+            //    NlogHelper.WriteWarnLog("停止滤波");
+            //    button.Content = "开始";
+            //}
         }
 
        
@@ -371,10 +401,13 @@ namespace Collect
         private Button btn_clear;
         private Button btn_save_com;
         private Button btn_save_filter_com;
+        private Button btn_save_filter_excel;
+        private Button btn_save_filter_ns2;
         private Button btn_clear_com;
         private Button btn_filter;
         private Button btn_clear_original_filter_txt;
         private ComboBox comboBox1_com;
+        private Button btn_save_offline;
 
         private void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -390,7 +423,6 @@ namespace Collect
 
                 if (existingEEGDocumentPane == null)
                 {
-
                     PlotGroup.Children.Add(EEGDocumentPane);
                     var EEGDocument = new LayoutDocument();
                     EEGDocument.Content = eeg;
@@ -400,8 +432,6 @@ namespace Collect
                     EEGDocument.Closed += (a, b) =>
                     {
                         EEGDocumentPane.Children.Remove(EEGDocument);
-
-
                     };
                 }
                 else
@@ -453,18 +483,18 @@ namespace Collect
                 }
 
             }
-            if (tag == "EEG_filter")
+            if (tag == "EEG_OffLine")
             {
                 var existingEEGFilterDocumentPane = PlotGroup.Children
                 .OfType<LayoutDocumentPane>()
-                .FirstOrDefault(m => m.Children.Any(doc => doc.Title == "EEG_filter"));
+                .FirstOrDefault(m => m.Children.Any(doc => doc.Title == "EEG_OffLine"));
                 if (existingEEGFilterDocumentPane == null)
                 {
                     var EEG_FilterDocumentPane = new LayoutDocumentPane();
                     PlotGroup.Children.Add(EEG_FilterDocumentPane);
                     var EEG_FilterDocument = new LayoutDocument();
                     EEG_FilterDocument.Content = eeg_filter;
-                    EEG_FilterDocument.Title = "EEG_filter";
+                    EEG_FilterDocument.Title = "EEG_OffLine";
                     EEG_FilterDocumentPane.Children.Add(EEG_FilterDocument);
 
                     EEG_FilterDocument.Closed += (a, b) =>
@@ -476,7 +506,7 @@ namespace Collect
                 {
                     foreach (var doc in existingEEGFilterDocumentPane.Children)
                     {
-                        if (doc is LayoutDocument layoutDocument && layoutDocument.Title == "EEG_filter")
+                        if (doc is LayoutDocument layoutDocument && layoutDocument.Title == "EEG_OffLine")
                         {
                             layoutDocument.IsSelected = true;
                             break;
@@ -512,7 +542,7 @@ namespace Collect
                 groupbox.Visibility = Visibility.Visible;
                 groupbox.Content = stackpanel3;
             }
-            if (tag == "filter")
+            if (tag == "OffLine")
             {
                 groupbox.Visibility = Visibility.Visible;
                 groupbox.Content = stackpanel4;
@@ -543,11 +573,7 @@ namespace Collect
             
         }
 
-        private void Btn_save_filter_Click(object sender, RoutedEventArgs e)
-        {
-           eeg_filter.button_save_ecg();
-        }
-
+       
         private void ComboBox1_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             eeg.ComboBox_amplitude(comboBox1.SelectedIndex);
@@ -560,9 +586,21 @@ namespace Collect
 
         }
 
-        private void Btn_save_Click(object sender, RoutedEventArgs e)
+        private void Btn_save_filter_filter_Click(object sender, RoutedEventArgs e)
         {
-            eeg.button_save_ecg();
+            eeg.button_save_ecg_filter_ns2();
+        }
+        private void Btn_save_filter_excel_Click(object sender, RoutedEventArgs e)
+        {
+            eeg.button_save_ecg_filter_excel();
+        }
+        private void Btn_save_original_ns2_Click(object sender, RoutedEventArgs e)
+        {
+            eeg.button_save_ecg_original_ns2();
+        }
+        private void Btn_save_original_excel_Click(object sender, RoutedEventArgs e)
+        {
+            eeg.button_save_ecg_original_excel();
         }
 
         private void Com_tcp_Click(object sender, RoutedEventArgs e)
@@ -664,6 +702,24 @@ namespace Collect
         private void MainWindow1_Closed(object sender, EventArgs e)
         {
             Environment.Exit(0);
+        }
+
+        private void ListBox_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            // 判断是否点击了 ListBoxItem
+            var item = FindParent<ListBoxItem>((DependencyObject)e.OriginalSource);
+            if (item != null && item.IsSelected)
+            {
+                // 强制触发重新选择
+                item.IsSelected = false;
+                item.IsSelected = true; // 这会触发 SelectionChanged
+            }
+        }
+        private static T FindParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            while (child != null && !(child is T))
+                child = VisualTreeHelper.GetParent(child);
+            return child as T;
         }
     }
 

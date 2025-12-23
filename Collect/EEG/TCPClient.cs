@@ -293,6 +293,7 @@ namespace Collect.EEG
         Queue<byte> queue = new Queue<byte>();
         public bool IsWri = false;
         public bool IsWri_start = false;
+        public bool IsWri_stop = false;
         public void Senddata(NetworkStream networkStream,string freq,string duty,string time)
         {
             string binaryString = Convert.ToString(int.Parse(time), 2).PadLeft(16, '0');
@@ -324,10 +325,20 @@ namespace Collect.EEG
                         }
                         if (IsWri_start)
                         {
-                            //byte[] sendBuffer = new byte[3] { 255, 01, 254 };
-                            //stream.Write(sendBuffer, 0, sendBuffer.Length);
-                            //NlogHelper.WriteInfoLog("已发送/停止采集指令");
+                            byte[] sendBuffer = new byte[3] { 255, 241, 254 };
+                            stream.Write(sendBuffer, 0, sendBuffer.Length);
+                            NlogHelper.WriteInfoLog("已发送开始采集指令");
                             IsWri_start = false;
+                        }
+                        if (IsWri_stop)
+                        {
+                       
+                            byte[] sendBuffer = new byte[3] { 255, 242, 254 };
+                            stream.Write(sendBuffer, 0, sendBuffer.Length);
+                            NlogHelper.WriteInfoLog("已发送停止采集指令");
+                            
+                            
+                            IsWri_stop=false;
                         }
                         if (client.Available > 0)
                         {
@@ -382,7 +393,6 @@ namespace Collect.EEG
             this.IPAdress = ip;
             this.Port = port;
 
-
             try
             {
                 client = new TcpClient();
@@ -426,14 +436,15 @@ namespace Collect.EEG
         public bool Stop()
         {
             run = false;
+            IsWri_stop = true;
 
             if (th != null)
             {
                 th.Join();
-
                 th = null;
                 LogHelper.WriteInfoLog("TCP采集线程已停止并且销毁");
                 NlogHelper.WriteInfoLog("TCP采集线程已停止并且销毁");
+
             }
 
             if (client.Connected == true)

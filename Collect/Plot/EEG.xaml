@@ -46,6 +46,8 @@
                 <CheckBox x:Name="channel_1_8"  Foreground="Black" Content="全选" Margin="10,10,0,0" Checked="channel_1_8_Checked"  Unchecked="channel_1_8_Unchecked"></CheckBox>
                 <TextBlock Text="接收数据包" Margin="5,10,0,0"></TextBlock>
                 <TextBlock Margin="5,10,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="NumEEG"></TextBlock>
+                <TextBlock Text="时间" Margin="5,10,0,0"></TextBlock>
+                <TextBlock Margin="5,10,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="EEG_time"></TextBlock>
             </StackPanel>
 
             <s:SciChartSurface s:ThemeManager.Theme="ExpressionLight"  x:Name="sciChartSurface"     s:VisualXcceleratorEngine.EnableImpossibleMode="False"     Grid.Column="1">

@@ -20,6 +20,8 @@
                 <TextBlock Text="频率2"></TextBlock>
                 <TextBox x:Name="freq2" ></TextBox>
                 <Button Content="清除图形" Name="btn_clear" Click="btn_clear_Click"></Button>-->
+                <Button  Content="测试FIR" Click="Button_Click"></Button>
+                <Button  Content="测试IIR" Click="Button_Click_1"></Button>
                 <CheckBox x:Name="channel_1"  Foreground="Red" Content="通道1" Margin="10,135,0,0" Checked="channel_1_Checked" Unchecked="channel_1_Unchecked"></CheckBox>
                 <CheckBox x:Name="channel_2"  Foreground="Orange" Content="通道2" Margin="10,10,0,0" Checked="channel_2_Checked" Unchecked="channel_2_Unchecked"></CheckBox>
                 <CheckBox x:Name="channel_3"   Foreground="Cyan" Content="通道3" Margin="10,10,0,0" Checked="channel_3_Checked" Unchecked="channel_3_Unchecked"></CheckBox>
@@ -40,6 +42,7 @@
                     <s:ModifierGroup>
                         <s:RubberBandXyZoomModifier />
                         <s:ZoomExtentsModifier />
+                        <s:MouseWheelZoomModifier />
                     </s:ModifierGroup>
                 </s:SciChartSurface.ChartModifier>
             </s:SciChartSurface>

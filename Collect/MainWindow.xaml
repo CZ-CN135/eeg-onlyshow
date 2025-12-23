@@ -34,8 +34,8 @@
                         <avalon:LayoutAnchorable Title="菜单栏" x:Name="meua">
                             <ListBox  x:Name="listbox"  SelectionChanged="ListBox_SelectionChanged" >
                                 <ListBoxItem  Content="脑电图" Tag="EEG" />
-                                <ListBoxItem  Content="滤波图" Tag="EEG_filter"/>
-                                <ListBoxItem  Content="频谱图" Tag="EEG_Pro" />
+                                <ListBoxItem  Content="离线图" Tag="EEG_OffLine"/>
+                                <!--<ListBoxItem  Content="频谱图" Tag="EEG_Pro" />-->
                             </ListBox>
                         </avalon:LayoutAnchorable>
                     </avalon:LayoutAnchorablePane>
@@ -48,14 +48,15 @@
                             </avalon:LayoutAnchorable>
                         </avalon:LayoutAnchorablePane>
                     </avalon:LayoutPanel>
-                    <avalon:LayoutAnchorablePane x:Name="panelLeft2" DockWidth="110" >
+                    <avalon:LayoutAnchorablePane x:Name="panelLeft2" DockWidth="150" >
                         <avalon:LayoutAnchorable Title="功能区" x:Name="actionRegion">
                             <StackPanel Orientation="Vertical">
-                                <ListBox  x:Name="listbox1" SelectionChanged="listbox1_SelectionChanged" >
+                                <ListBox  x:Name="listbox1" SelectionChanged="listbox1_SelectionChanged"
+                                           PreviewMouseLeftButtonDown="ListBox_PreviewMouseLeftButtonDown">
                                     <ListBoxItem FontSize="15" Content="AP" Tag="tcp" />
-                                    <ListBoxItem FontSize="15" Content="USART" Tag="com"/>
-                                    <ListBoxItem FontSize="15" Content="Filter" Tag="filter"/>
-                                    <ListBoxItem FontSize="15" Content="PWM" Tag="pwm"/>
+                                    <ListBoxItem FontSize="15" Content="OffLine" Tag="OffLine"/>
+                                    <!--<ListBoxItem FontSize="15" Content="Filter" Tag="filter"/>
+                                    <ListBoxItem FontSize="15" Content="PWM" Tag="pwm"/>-->
                                 </ListBox>
                                 <GroupBox Margin="0,20,0,0" Background="White" x:Name="groupbox" Visibility="Hidden">
                                 </GroupBox>
