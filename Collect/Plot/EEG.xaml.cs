@@ -149,7 +149,7 @@ namespace Collect.Plot
                 //MessageBox.Show("错误", "请检查网络");
             }
 
-
+            ResetFilterState(8);
         }
         XyDataSeries<double, double>[] lineData;
         private double g_index = 0;
@@ -265,7 +265,7 @@ namespace Collect.Plot
             {
                 client.Stop();
                 client.EcgEvent -= uav_control_CmdEvent;
-                WriteEdf_Finish_multifile(0);
+                //WriteEdf_Finish_multifile(0);
                 return false;
             }
 
