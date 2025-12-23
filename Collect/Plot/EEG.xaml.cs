@@ -420,7 +420,7 @@ namespace Collect.Plot
         /// <param name="ch"></param>
         /// <param name="x"></param>
         /// <returns></returns>
-        static double sampleRate = 500;
+        static double sampleRate = 1000;
 
         static double hpCut = 0.5;   // 高通截止 0.5 Hz
         static double hpA = Math.Exp(-2.0 * Math.PI * hpCut / sampleRate);
@@ -533,6 +533,7 @@ namespace Collect.Plot
                 double ylp1 = lpf1[i].Process(y2);
                 double ylp2 = lpf2[i].Process(ylp1);
 
+                //double filterdata = Median5_Update(i, ylp2);
 
                 //// --- 第1级 一阶高通：去基线漂移 ---
                 //double yhp1 = hpA_save * (hp1_prevY_save[i] + temp - hp1_prevX_save[i]);
