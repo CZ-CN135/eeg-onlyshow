@@ -137,18 +137,20 @@
       <HintPath>..\packages\OxyPlot.Wpf.Shared.2.2.0\lib\net462\OxyPlot.Wpf.Shared.dll</HintPath>
     </Reference>
     <Reference Include="ReachFramework" />
-    <Reference Include="SciChart.Charting, Version=6.3.0.13476, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL" />
+    <Reference Include="SciChart.Charting, Version=6.3.0.13476, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <HintPath>..\..\..\..\Desktop\swj\脑电新闭环源代码 - 栋 - TCP-仅用于显示\Collect\BIN\Debug\SciChart.Charting.dll</HintPath>
+    </Reference>
     <Reference Include="SciChart.Core, Version=6.3.0.13476, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>BIN\Debug\SciChart.Core.dll</HintPath>
+      <HintPath>..\..\..\..\Desktop\swj\脑电新闭环源代码 - 栋 - TCP-仅用于显示\Collect\BIN\Debug\SciChart.Core.dll</HintPath>
     </Reference>
     <Reference Include="SciChart.Data, Version=6.3.0.13476, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>BIN\Debug\SciChart.Data.dll</HintPath>
+      <HintPath>..\..\..\..\Desktop\swj\脑电新闭环源代码 - 栋 - TCP-仅用于显示\Collect\BIN\Debug\SciChart.Data.dll</HintPath>
     </Reference>
     <Reference Include="SciChart.Drawing, Version=6.3.0.13476, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>BIN\Debug\SciChart.Drawing.dll</HintPath>
+      <HintPath>..\..\..\..\Desktop\swj\脑电新闭环源代码 - 栋 - TCP-仅用于显示\Collect\BIN\Debug\SciChart.Drawing.dll</HintPath>
     </Reference>
     <Reference Include="ScottPlot, Version=5.0.40.0, Culture=neutral, PublicKeyToken=86698dc10387c39e, processorArchitecture=MSIL">
       <HintPath>..\packages\ScottPlot.5.0.40\lib\net462\ScottPlot.dll</HintPath>

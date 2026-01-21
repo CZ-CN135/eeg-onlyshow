@@ -27,6 +27,8 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading.Tasks;
+using System.Web.UI.WebControls;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
@@ -503,71 +505,276 @@ namespace Collect.Plot
         private bool _detectorInited = false;
         private int Numeeg = 0;
 
+        //private int uiUpdateCounter = 0;
+        //private const int UI_UPDATE_INTERVAL = 100; // 每50个采样点更新一次
+
+        private int uiUpdateCounter = 0;
+        private const int UI_UPDATE_INTERVAL = 50; // 每50个采样点更新一次UI
+
+        // 用于批量更新的缓冲区
+        private readonly object _bindingLock = new object();
+        private readonly List<double[]> _bindingBuffer = new List<double[]>();
+        private const int bindingBatch = 50; // 每50个点批量更新一次图表
+
         private void uav_control_CmdEvent(object sender, EcgTCPEventArgs e)
         {
-            Numeeg += 33;
-
-            Buffer.BlockCopy(e.value, 2, eeg_data_byte, 0, 24);
-            process_eegdata(eeg_data_byte);
-
-        
-
-            for (int i = 0; i < 8; i++)
+            try
             {
-                double temp = Convert.ToDouble(eeg_data_float[i]);
+                Numeeg += 33;
 
-                // 1) 一阶高通
-                double yhp1 = hpA * (hp1_prevY[i] + temp - hp1_prevX[i]);
-                hp1_prevX[i] = temp;
-                hp1_prevY[i] = yhp1;
+                Buffer.BlockCopy(e.value, 2, eeg_data_byte, 0, 24);
+                process_eegdata(eeg_data_byte);
 
-                // 2) 二阶高通（再一级一阶）
-                double yhp2 = hpA * (hp2_prevY[i] + yhp1 - hp2_prevX[i]);
-                hp2_prevX[i] = yhp1;
-                hp2_prevY[i] = yhp2;
 
-                // 3) 双陷波
-                double y1 = notch1[i].Process(yhp2);
-                double y2 = notch2[i].Process(y1);
 
-                // 4) 双低通
-                double ylp1 = lpf1[i].Process(y2);
-                double ylp2 = lpf2[i].Process(ylp1);
+                for (int i = 0; i < 8; i++)
+                {
+                    double temp = Convert.ToDouble(eeg_data_float[i]);
 
-                // 5) 中值
-                double filterdata = Median5_Update(i, ylp2);
+                    // 1) 一阶高通
+                    double yhp1 = hpA * (hp1_prevY[i] + temp - hp1_prevX[i]);
+                    hp1_prevX[i] = temp;
+                    hp1_prevY[i] = yhp1;
 
-                eeg_data_buffer[i][buffer_index] = filterdata;
+                    // 2) 二阶高通（再一级一阶）
+                    double yhp2 = hpA * (hp2_prevY[i] + yhp1 - hp2_prevX[i]);
+                    hp2_prevX[i] = yhp1;
+                    hp2_prevY[i] = yhp2;
 
-                _rowFiltered[i] = ClampToInt16Uv(filterdata);
-                _rowOriginal[i] = ClampToInt16Uv(yhp1);
+                    // 3) 双陷波
+                    double y1 = notch1[i].Process(yhp2);
+                    double y2 = notch2[i].Process(y1);
+
+                    // 4) 双低通
+                    double ylp1 = lpf1[i].Process(y2);
+                    double ylp2 = lpf2[i].Process(ylp1);
+
+                    // 5) 中值
+                    double filterdata = Median5_Update(i, ylp2);
+
+                    eeg_data_buffer[i][buffer_index] = filterdata;
+
+                    _rowFiltered[i] = ClampToInt16Uv(filterdata);
+                    _rowOriginal[i] = ClampToInt16Uv(yhp1);
+                }
+
+                _recFiltered?.WriteRow(_rowFiltered);
+                _recOriginal?.WriteRow(_rowOriginal);
+
+                buffer_index++;
+                buffer_index %= BaoLength;
+
+                //for (int i = 0; i < 8; i++)
+                //{
+                //    lineData[i].Append(g_index, eeg_data_buffer[i][buffer_index] - i * 10000);
+                //}
+                using (sciChartSurface.SuspendUpdates())
+                {
+                    for (int i = 0; i < 8; i++)
+                    {
+                        lineData[i].Append(g_index, eeg_data_buffer[i][buffer_index] - i * 10000);
+                    }
+                }
+
+                g_index += 0.002;
+
+                uiUpdateCounter++;
+                if (Convert.ToInt32(g_index) - g_old_ecg_time > 4 || Convert.ToInt32(g_index) < WindowSize)
+                {
+                    g_old_ecg_time = Convert.ToInt32(g_index);
+
+                    if (Convert.ToInt32(g_index) < WindowSize)
+                        g_old_ecg_time = Convert.ToInt32(WindowSize - 5);
+
+                    //Dispatcher.BeginInvoke((Action)delegate
+                    //{
+                    //    sciChartSurface.XAxis.VisibleRange = ComputeXAxisRange(g_old_ecg_time);
+                    //});
+
+                    if (uiUpdateCounter >= UI_UPDATE_INTERVAL)
+                    {
+                        uiUpdateCounter = 0;
+                        this.Dispatcher.BeginInvoke((Action)delegate ()
+                        {
+                            sciChartSurface.XAxis.VisibleRange = ComputeXAxisRange(g_old_ecg_time);
+                            NumEEG.Text = Numeeg.ToString();
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"数据处理异常: {ex.Message}");
+                LogHelper.WriteErrorLog($"数据处理异常: {ex.Message}");
+                RestartAcquisition();
             }
 
-            _recFiltered?.WriteRow(_rowFiltered);
-            _recOriginal?.WriteRow(_rowOriginal);
+            //try
+            //{
+            //    Numeeg += 33;
 
-            buffer_index++;
-            buffer_index %= BaoLength;
+            //    Buffer.BlockCopy(e.value, 2, eeg_data_byte, 0, 24);
+            //    process_eegdata(eeg_data_byte);
 
-            for (int i = 0; i < 8; i++)
+            //    // 滤波处理（在后台线程执行，无需UI）
+            //    double[] currentData = new double[8];
+            //    for (int i = 0; i < 8; i++)
+            //    {
+            //        double temp = Convert.ToDouble(eeg_data_float[i]);
+
+            //        // 1) 一阶高通
+            //        double yhp1 = hpA * (hp1_prevY[i] + temp - hp1_prevX[i]);
+            //        hp1_prevX[i] = temp;
+            //        hp1_prevY[i] = yhp1;
+
+            //        // 2) 二阶高通
+            //        double yhp2 = hpA * (hp2_prevY[i] + yhp1 - hp2_prevX[i]);
+            //        hp2_prevX[i] = yhp1;
+            //        hp2_prevY[i] = yhp2;
+
+            //        // 3) 双陷波
+            //        double y1 = notch1[i].Process(yhp2);
+            //        double y2 = notch2[i].Process(y1);
+
+            //        // 4) 双低通
+            //        double ylp1 = lpf1[i].Process(y2);
+            //        double ylp2 = lpf2[i].Process(ylp1);
+
+            //        // 5) 中值
+            //        double filterdata = Median5_Update(i, ylp2);
+
+            //        currentData[i] = filterdata;
+
+            //        _rowFiltered[i] = ClampToInt16Uv(filterdata);
+            //        _rowOriginal[i] = ClampToInt16Uv(yhp1);
+            //    }
+
+            //    // NS2写入（异步，避免阻塞）
+            //    try
+            //    {
+            //        _recFiltered?.WriteRow(_rowFiltered);
+            //        _recOriginal?.WriteRow(_rowOriginal);
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        System.Diagnostics.Debug.WriteLine($"NS2写入异常: {ex.Message}");
+            //    }
+
+            //    // 缓冲数据用于图表更新
+            //    lock (_bindingLock)
+            //    {
+            //        _bindingBuffer.Add(new double[] { g_index, currentData[0], currentData[1], currentData[2],
+            //                                   currentData[3], currentData[4], currentData[5],
+            //                                   currentData[6], currentData[7] });
+            //        g_index += 0.001; // 根据实际采样率调整
+            //    }
+
+            //    uiUpdateCounter++;
+
+            //    // 批量更新UI（降低频率）
+            //    if (uiUpdateCounter >= bindingBatch)
+            //    {
+            //        uiUpdateCounter = 0;
+
+            //        // 复制缓冲数据
+            //        List<double[]> bindingCopy;
+            //        lock (_bindingLock)
+            //        {
+            //            bindingCopy = new List<double[]>(_bindingBuffer);
+            //            _bindingBuffer.Clear();
+            //        }
+
+            //        // 在UI线程更新图表
+            //        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, (Action)(() =>
+            //        {
+            //            try
+            //            {
+            //                UpdateChart(bindingCopy);
+            //            }
+            //            catch (Exception ex)
+            //            {
+            //                System.Diagnostics.Debug.WriteLine($"图表更新异常: {ex.Message}");
+            //            }
+            //        }));
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    System.Diagnostics.Debug.WriteLine($"数据处理异常: {ex.Message}");
+            //    LogHelper.WriteErrorLog($"数据处理异常: {ex.Message}");
+            //}
+        }
+        // 方法1：使用 async/await（推荐）
+        private async void RestartAcquisition()
+        {
+            try
             {
-                lineData[i].Append(g_index, eeg_data_buffer[i][buffer_index] - i * 10000);
+                System.Diagnostics.Debug.WriteLine($"数据处理异常，准备重启采集...");
+                LogHelper.WriteErrorLog($"数据处理异常，准备重启采集...");
+
+                // 停止采集
+                bool success = TCP_Install_ecg("结束", "192.168.4.1", 4321);
+                if (success)
+                {
+                    client.IsWri_start = false;
+                }
+
+                NlogHelper.WriteInfoLog("等待2秒后重新开始采集...");
+
+                // 等待2秒
+                await Task.Delay(2000);
+
+                // 重新开始采集
+                bool success1 = TCP_Install_ecg("开始", "192.168.4.1", 4321);
+                if (success1)
+                {
+                    client.IsWri_start = true;
+                    NlogHelper.WriteInfoLog("重启采集成功");
+                }
+                else
+                {
+                    client.IsWri_start = false;
+                    NlogHelper.WriteErrorLog("重启采集失败");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.WriteErrorLog($"重启采集异常: {ex.Message}");
+            }
+        }
+        /// <summary>
+        /// 在UI线程批量更新图表
+        /// </summary>
+        private void UpdateChart(List<double[]> dataList)
+        {
+            if (dataList == null || dataList.Count == 0) return;
+
+            using (sciChartSurface.SuspendUpdates())
+            {
+                foreach (var data in dataList)
+                {
+                    double xVal = data[0];
+                    for (int i = 0; i < 8; i++)
+                    {
+                        lineData[i].Append(xVal, data[i + 1] - i * 10000);
+                    }
+                }
             }
 
-            g_index += 0.002;
+            // 更新X轴范围
+            double lastX = dataList[dataList.Count - 1][0];
+            int currentTime = Convert.ToInt32(lastX);
 
-            if (Convert.ToInt32(g_index) - g_old_ecg_time > 4 || Convert.ToInt32(g_index) < WindowSize)
+            if (currentTime - g_old_ecg_time > 4 || currentTime < WindowSize)
             {
-                g_old_ecg_time = Convert.ToInt32(g_index);
-
-                if (Convert.ToInt32(g_index) < WindowSize)
+                g_old_ecg_time = currentTime;
+                if (currentTime < WindowSize)
                     g_old_ecg_time = Convert.ToInt32(WindowSize - 5);
 
-                Dispatcher.BeginInvoke((Action)delegate
-                {
-                    sciChartSurface.XAxis.VisibleRange = ComputeXAxisRange(g_old_ecg_time);
-                });
+                sciChartSurface.XAxis.VisibleRange = ComputeXAxisRange(g_old_ecg_time);
             }
+
+            NumEEG.Text = Numeeg.ToString();
         }
 
         // ===== UI 勾选显示 =====
@@ -655,13 +862,150 @@ namespace Collect.Plot
         }
 
 
+        // ===== 保存为Excel相关 =====
         private const int EXCEL_MAX_ROWS = 1000000;
         private const int EXCEL_HEADER_ROWS = 1;
 
         public void button_save_ecg_filter_excel()
         {
-            System.Windows.MessageBox.Show("数据量无限制时，不建议保存为 Excel（行数与文件大小限制、写入极慢）。\n建议：保存为 NS2，然后在 MATLAB / Python 里按需截取时间段再导出表格。");
+            SaveToExcelFromNs2(_tempFilteredPath, "滤波", "Record-filtered-");
         }
+
+        public void button_save_ecg_original_excel()
+        {
+            SaveToExcelFromNs2(_tempOriginalPath, "原始", "Record-original-");
+        }
+        private void SaveToExcelFromNs2(string ns2Path, string dataType, string filePrefix)
+        {
+            if (string.IsNullOrWhiteSpace(ns2Path) || !File.Exists(ns2Path))
+            {
+                System.Windows.MessageBox.Show($"没有找到可保存的{dataType}数据文件：请先开始采集并停止后再保存。");
+                return;
+            }
+
+            if ((_recFiltered != null && dataType == "滤波") || (_recOriginal != null && dataType == "原始"))
+            {
+                System.Windows.MessageBox.Show("建议先停止采集再保存（否则文件仍在写入）。");
+                return;
+            }
+
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Title = $"保存{dataType}EEG（Excel）";
+            string date = filePrefix + DateTime.Now.ToString("yyyyMMdd-HH时mm分ss秒");
+            saveFileDialog.FileName = date + ".xlsx";
+            saveFileDialog.DefaultExt = "xlsx";
+            saveFileDialog.Filter = "Excel 文件 (*.xlsx)|*.xlsx|所有文件 (*.*)|*.*";
+
+            if (saveFileDialog.ShowDialog() != true) return;
+
+            try
+            {
+                ExportNs2ToExcel(ns2Path, saveFileDialog.FileName, 8);
+                System.Windows.MessageBox.Show($"{dataType}数据已成功保存为Excel文件。");
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"保存Excel文件时出错: {ex.Message}");
+            }
+        }
+        private void ExportNs2ToExcel(string ns2Path, string excelPath, int channelCount)
+        {
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
+
+            // 读取NS2文件获取double数据
+            var allData = ReadNs2DataAsDouble(ns2Path, channelCount);
+
+            using (var package = new ExcelPackage(new FileInfo(excelPath)))
+            {
+                int sheetIndex = 1;
+                int currentRow = 1;
+                int dataIndex = 0;
+
+                ExcelWorksheet worksheet = CreateNewDataSheet(package, sheetIndex, ref currentRow);
+
+                foreach (var row in allData)
+                {
+                    if (currentRow > EXCEL_MAX_ROWS)
+                    {
+                        sheetIndex++;
+                        worksheet = CreateNewDataSheet(package, sheetIndex, ref currentRow);
+                    }
+
+                    for (int ch = 0; ch < channelCount; ch++)
+                    {
+                        worksheet.Cells[currentRow, ch + 1].Value = row[ch];  // double类型
+                    }
+
+                    currentRow++;
+                    dataIndex++;
+                }
+
+                package.Save();
+            }
+        }
+        /// <summary>
+        /// 从NS2文件读取数据并返回double类型数组
+        /// </summary>
+        private List<double[]> ReadNs2DataAsDouble(string ns2Path, int channelCount)
+        {
+            var result = new List<double[]>();
+
+            using (var fs = new FileStream(ns2Path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var br = new BinaryReader(fs))
+            {
+                // 读取 FileTypeID (8 bytes)
+                br.ReadBytes(8);
+
+                // FileSpec (2 bytes)
+                br.ReadBytes(2);
+
+                // HeaderBytes (4 bytes) - 头部总长度
+                uint headerBytes = br.ReadUInt32();
+
+                // 跳到数据部分
+                fs.Seek(headerBytes, SeekOrigin.Begin);
+
+                byte marker = br.ReadByte();       // 标记
+                uint timestamp = br.ReadUInt32();  // 时间戳
+                uint dataPoints = br.ReadUInt32(); // 数据点数
+
+                // 读取所有数据
+                for (uint i = 0; i < dataPoints; i++)
+                {
+                    if (fs.Position >= fs.Length) break;
+
+                    double[] row = new double[channelCount];
+                    for (int ch = 0; ch < channelCount; ch++)
+                    {
+                        // 读取short，转换为double
+                        short val = br.ReadInt16();
+                        row[ch] = (double)val;  // 保存为double类型
+                    }
+                    result.Add(row);
+                }
+            }
+
+            return result;
+        }
+
+        private ExcelWorksheet CreateNewDataSheet(ExcelPackage package, int sheetIndex, ref int currentRow)
+        {
+            string sheetName = $"EEG_Data_{sheetIndex}";
+            var worksheet = package.Workbook.Worksheets.Add(sheetName);
+
+            string[] headers = { "Ch1", "Ch2", "Ch3", "Ch4", "Ch5", "Ch6", "Ch7", "Ch8" };
+            for (int i = 0; i < headers.Length; i++)
+            {
+                worksheet.Cells[1, i + 1].Value = headers[i];
+            }
+
+            currentRow = EXCEL_HEADER_ROWS + 1;
+            return worksheet;
+        }
+        //public void button_save_ecg_filter_excel()
+        //{
+        //    System.Windows.MessageBox.Show("数据量无限制时，不建议保存为 Excel（行数与文件大小限制、写入极慢）。\n建议：保存为 NS2，然后在 MATLAB / Python 里按需截取时间段再导出表格。");
+        //}
 
         private ExcelWorksheet CreateNewSheet(ExcelPackage package, int sheetIndex, ref int currentRow)
         {
@@ -722,10 +1066,10 @@ namespace Collect.Plot
         }
 
 
-        public void button_save_ecg_original_excel()
-        {
-            System.Windows.MessageBox.Show("数据量无限制时，不建议保存为 Excel（行数与文件大小限制、写入极慢）。\n建议：保存为 NS2，然后在 MATLAB / Python 里按需截取时间段再导出表格。");
-        }
+        //public void button_save_ecg_original_excel()
+        //{
+        //    System.Windows.MessageBox.Show("数据量无限制时，不建议保存为 Excel（行数与文件大小限制、写入极慢）。\n建议：保存为 NS2，然后在 MATLAB / Python 里按需截取时间段再导出表格。");
+        //}
 
         private ExcelWorksheet CreateNewOriginalSheet(ExcelPackage package, int sheetIndex, ref int currentRow)
         {
@@ -791,7 +1135,7 @@ namespace Collect.Plot
         private void InitializeTimer()
         {
             timer = new System.Windows.Threading.DispatcherTimer();
-            timer.Interval = TimeSpan.FromSeconds(1);
+            timer.Interval = TimeSpan.FromSeconds(5);
             timer.Tick += Timer_Tick;
             _sw.Restart();
         }

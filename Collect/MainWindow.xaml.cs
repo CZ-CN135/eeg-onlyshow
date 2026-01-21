@@ -684,9 +684,10 @@ namespace Collect
 
             var button = sender as Button;
             var content = button.Content.ToString();
+            eeg.set_filter_params(Convert.ToDouble(fcbox.Text));
             bool sucess = eeg.TCP_Install_ecg(content, Iptextbox.Text, int.Parse(Porttextbox.Text));
             eeg.PGA = Convert.ToInt16(PGAbox.Text);
-            eeg.set_filter_params(Convert.ToDouble(fcbox.Text));
+           
             if (sucess)
             {
                 eeg.client.IsWri_start = true;
