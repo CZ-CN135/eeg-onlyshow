@@ -621,15 +621,15 @@ namespace Collect
         {
             var button = sender as Button;
             var content = button.Content.ToString();
-            bool sucess = eeg.Serial_install_ecg(content, comboBox.SelectedItem.ToString());
-            if (sucess)
-            {
-                button.Content = "结束";
-            }
-            else
-            {
-                button.Content = "开始";
-            }
+            //bool sucess = eeg.Serial_install_ecg(content, comboBox.SelectedItem.ToString());
+            //if (sucess)
+            //{
+            //    button.Content = "结束";
+            //}
+            //else
+            //{
+            //    button.Content = "开始";
+            //}
         }
 
         private void ComboBox_DropDownOpened(object sender, EventArgs e)
