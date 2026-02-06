@@ -369,7 +369,7 @@ namespace Collect.Plot
         public double hpCut = 0.3;   // 高通截止 0.5 Hz
         public double hpA;
 
-        public double lpCut = 40.0;  // 低通截止 50 Hz
+        public double lpCut = 100.0;  // 低通截止 100 Hz
         // 4阶 Butterworth 两段二阶的 Q（固定值）
         public double lpQ1 = 0.5411961;
         public double lpQ2 = 1.3065630;
@@ -525,7 +525,6 @@ namespace Collect.Plot
 
                 Buffer.BlockCopy(e.value, 2, eeg_data_byte, 0, 24);
                 process_eegdata(eeg_data_byte);
-
 
 
                 for (int i = 0; i < 8; i++)
