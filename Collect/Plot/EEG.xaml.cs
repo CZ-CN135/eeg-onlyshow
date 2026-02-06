@@ -392,7 +392,7 @@ namespace Collect.Plot
         BiquadLPF[] lpf2;
         BiquadNotch[] notch1;
         BiquadNotch[] notch2;
-
+       
         public void set_filter_params(double fs)
         {
             sampleRate = fs;
@@ -516,6 +516,7 @@ namespace Collect.Plot
         private readonly List<double[]> _bindingBuffer = new List<double[]>();
         private const int bindingBatch = 50; // 每50个点批量更新一次图表
 
+        public bool clear_peak_flag = false;
         private void uav_control_CmdEvent(object sender, EcgTCPEventArgs e)
         {
             try
@@ -531,9 +532,19 @@ namespace Collect.Plot
                 {
                     double temp = Convert.ToDouble(eeg_data_float[i]);
 
+                    double peakdata = 0;
+                    if (clear_peak_flag)
+                    {
+                        peakdata = Median5_Update(i, temp);
+                    }
+                    else
+                    {
+                        peakdata = temp;
+                    }
+
                     // 1) 一阶高通
-                    double yhp1 = hpA * (hp1_prevY[i] + temp - hp1_prevX[i]);
-                    hp1_prevX[i] = temp;
+                    double yhp1 = hpA * (hp1_prevY[i] + peakdata - hp1_prevX[i]);
+                    hp1_prevX[i] = peakdata;
                     hp1_prevY[i] = yhp1;
 
                     // 2) 二阶高通（再一级一阶）
@@ -549,12 +560,10 @@ namespace Collect.Plot
                     double ylp1 = lpf1[i].Process(y2);
                     double ylp2 = lpf2[i].Process(ylp1);
 
-                    // 5) 中值
-                    double filterdata = Median5_Update(i, ylp2);
+                   
+                    eeg_data_buffer[i][buffer_index] = ylp2;
 
-                    eeg_data_buffer[i][buffer_index] = filterdata;
-
-                    _rowFiltered[i] = ClampToInt16Uv(filterdata);
+                    _rowFiltered[i] = ClampToInt16Uv(ylp2);
                     _rowOriginal[i] = ClampToInt16Uv(yhp1);
                 }
 

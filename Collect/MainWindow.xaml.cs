@@ -66,38 +66,44 @@ namespace Collect
             btn_save_filter.Click += Btn_save_original_excel_Click;
 
             btn_clear = new System.Windows.Controls.Button();
-            btn_clear.Content = "清除";
+            btn_clear.Content = "清除曲线";
             btn_clear.FontSize = 15;
             btn_clear.Margin = new Thickness(0, 10, 0, 0);
             btn_clear.Click += btn_clear_Click;
 
-            comboBox1 = new ComboBox();
-            comboBox1.FontSize = 15;
-            comboBox1.Items.Add(new ComboBoxItem()
-            {
-                Content = "0.1"
-            });
-            comboBox1.Items.Add(new ComboBoxItem()
-            {
-                Content = "0.5"
-            });
-            comboBox1.Items.Add(new ComboBoxItem()
-            {
-                Content = "1"
-            });
-            comboBox1.Items.Add(new ComboBoxItem()
-            {
-                Content = "5"
-            });
-            comboBox1.Items.Add(new ComboBoxItem()
-            {
-                Content = "10"
-            });
-            comboBox1.Items.Add(new ComboBoxItem()
-            {
-                Content = "100"
-            });
-            comboBox1.SelectionChanged += ComboBox1_SelectionChanged;
+            btn_clear_log = new System.Windows.Controls.Button();
+            btn_clear_log.Content = "清除日志";
+            btn_clear_log.FontSize = 15;
+            btn_clear_log.Margin = new Thickness(0, 10, 0, 0);
+            btn_clear_log.Click += Btn_clear_log_Click; 
+
+            //comboBox1 = new ComboBox();
+            //comboBox1.FontSize = 15;
+            //comboBox1.Items.Add(new ComboBoxItem()
+            //{
+            //    Content = "0.1"
+            //});
+            //comboBox1.Items.Add(new ComboBoxItem()
+            //{
+            //    Content = "0.5"
+            //});
+            //comboBox1.Items.Add(new ComboBoxItem()
+            //{
+            //    Content = "1"
+            //});
+            //comboBox1.Items.Add(new ComboBoxItem()
+            //{
+            //    Content = "5"
+            //});
+            //comboBox1.Items.Add(new ComboBoxItem()
+            //{
+            //    Content = "10"
+            //});
+            //comboBox1.Items.Add(new ComboBoxItem()
+            //{
+            //    Content = "100"
+            //});
+            //comboBox1.SelectionChanged += ComboBox1_SelectionChanged;
 
             stackpanel1 = new StackPanel();
             stackpanel1.Orientation = Orientation.Vertical;
@@ -137,7 +143,7 @@ namespace Collect
             btn_tcp.Margin = new Thickness(0, 10, 0, 0);
             btn_tcp.Click += Btn_tcp_Click;
 
-            stackpanel1.Children.Add(comboBox1);
+            //stackpanel1.Children.Add(comboBox1);
             stackpanel1.Children.Add(new TextBlock
             {
                 FontSize = 15,
@@ -159,12 +165,21 @@ namespace Collect
             fcbox.FontSize = 15;
             stackpanel1.Children.Add(fcbox);
 
+            //去除尖峰按钮
+            Button btn_clear_peak = new System.Windows.Controls.Button();
+            btn_clear_peak.Content = "开始去除尖峰";
+            btn_clear_peak.FontSize = 15;
+            btn_clear_peak.Margin = new Thickness(0, 10, 0, 0);
+            btn_clear_peak.Click += Btn_clear_peak_Click;
+
             stackpanel1.Children.Add(btn_tcp);
+            stackpanel1.Children.Add(btn_clear_peak);
             stackpanel1.Children.Add(btn_save);
             stackpanel1.Children.Add(btn_save_filter_excel);
             stackpanel1.Children.Add(btn_save_filter_ns2);
             stackpanel1.Children.Add(btn_save_filter);
             stackpanel1.Children.Add(btn_clear);
+            stackpanel1.Children.Add(btn_clear_log);
 
 
             //com
@@ -184,7 +199,7 @@ namespace Collect
 
 
             btn_clear_com = new System.Windows.Controls.Button();
-            btn_clear_com.Content = "清除";
+            btn_clear_com.Content = "清除曲线";
             btn_clear_com.FontSize = 15;
             btn_clear_com.Margin = new Thickness(0, 10, 0, 0);
             btn_clear_com.Click += btn_clear_Click;
@@ -339,12 +354,28 @@ namespace Collect
             btn_filter.Click += Btn_filter_Click;
             stackpanel4.Children.Add(btn_filter);
 
+            //去除尖峰按钮
+            Button btn_clear_peak_offline = new System.Windows.Controls.Button();
+            btn_clear_peak_offline.Content = "开始去除尖峰";
+            btn_clear_peak_offline.FontSize = 15;
+            btn_clear_peak_offline.Margin = new Thickness(0, 10, 0, 0);
+            btn_clear_peak_offline.Click += Btn_clear_peak_offline_Click; ;
+
+            stackpanel4.Children.Add(btn_clear_peak_offline);
+
             btn_save_offline = new System.Windows.Controls.Button();
             btn_save_offline.Content = "保存滤波数据";
             btn_save_offline.FontSize = 15;
             btn_save_offline.Margin = new Thickness(0, 10, 0, 0);
             btn_save_offline.Click += Btn_save_offline_Click; ;
             stackpanel4.Children.Add(btn_save_offline);
+
+            Button btn_clear_log_offline = new System.Windows.Controls.Button();
+            btn_clear_log_offline.Content = "清除日志";
+            btn_clear_log_offline.FontSize = 15;
+            btn_clear_log_offline.Margin = new Thickness(0, 10, 0, 0);
+            btn_clear_log_offline.Click += Btn_clear_log_offline_Click; 
+            stackpanel4.Children.Add(btn_clear_log_offline);
 
             //btn_clear_original_filter_txt = new System.Windows.Controls.Button();
             //btn_clear_original_filter_txt.Content = "清除文本数据";
@@ -353,6 +384,52 @@ namespace Collect
             //btn_clear_original_filter_txt.Click += Btn_clear_original_filter_txt_Click;
             //stackpanel4.Children.Add(btn_clear_original_filter_txt);
 
+        }
+
+        private void Btn_clear_log_offline_Click(object sender, RoutedEventArgs e)
+        {
+            LogRichTextBox.Document.Blocks.Clear();
+        }
+
+        private void Btn_clear_log_Click(object sender, RoutedEventArgs e)
+        {
+            LogRichTextBox.Document.Blocks.Clear();
+        }
+
+        private void Btn_clear_peak_offline_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var content = button.Content.ToString();
+            if (content == "开始去除尖峰")
+            {
+                eeg_filter.clear_peak_flag = true;
+                NlogHelper.WriteInfoLog("开始去除尖峰");
+                button.Content = "结束去除尖峰";
+            }
+            else
+            {
+                eeg_filter.clear_peak_flag = false;
+                NlogHelper.WriteWarnLog("停止去除尖峰");
+                button.Content = "开始去除尖峰";
+            }
+        }
+
+        private void Btn_clear_peak_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var content = button.Content.ToString();
+            if (content == "开始去除尖峰")
+            {
+                eeg.clear_peak_flag = true;
+                NlogHelper.WriteInfoLog("开始去除尖峰");
+                button.Content = "结束去除尖峰";
+            }
+            else
+            {
+                eeg.clear_peak_flag = false;
+                NlogHelper.WriteWarnLog("停止去除尖峰");
+                button.Content = "开始去除尖峰";
+            }
         }
 
         private void Btn_save_offline_Click(object sender, RoutedEventArgs e)
@@ -413,6 +490,7 @@ namespace Collect
         private StackPanel stackpanel4;
         private Button btn_save_filter;
         private Button btn_clear;
+        private Button btn_clear_log;
         private Button btn_save_com;
         private Button btn_save_filter_com;
         private Button btn_save_filter_excel;

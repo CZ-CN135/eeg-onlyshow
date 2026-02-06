@@ -307,6 +307,7 @@ namespace Collect.Plot
 
         }
         private bool _detectorInited = false;
+        public bool clear_peak_flag = false;
         public  double[][] LoadExcelAs2DArray(string Freqtextbox_filter)
         {
             // ① 打开文件选择框
@@ -376,12 +377,18 @@ namespace Collect.Plot
                 {
                     double temp = (Convert.ToDouble(data[i,m]));
 
-                    // ① 前置：5点中值去尖峰（防振铃）
-                    double med = Median5_Update(i, temp);
-                    double x = (Math.Abs(temp - med) > 800) ? med : temp;
+                    double peakdata = 0;
+                    if (clear_peak_flag)
+                    {
+                        peakdata = Median5_Update(i, temp);
+                    }
+                    else
+                    {
+                        peakdata = temp;
+                    }
                     // --- 第1级 一阶高通：去基线漂移 ---
-                    double yhp1 = hpA * (hp1_prevY[i] + x - hp1_prevX[i]);
-                    hp1_prevX[i] = x;
+                    double yhp1 = hpA * (hp1_prevY[i] + peakdata - hp1_prevX[i]);
+                    hp1_prevX[i] = peakdata;
                     hp1_prevY[i] = yhp1;
 
                     // --- 第2级 一阶高通：进一步增强滚降 ---
