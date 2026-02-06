@@ -3,6 +3,7 @@ using Collect.Helper;
 using Collect.Plot;
 using NLog;
 using NLog.Config;
+using SciChart.Core.Extensions;
 using System;
 using System.IO;
 using System.IO.Ports;
@@ -165,6 +166,16 @@ namespace Collect
             fcbox.FontSize = 15;
             stackpanel1.Children.Add(fcbox);
 
+            stackpanel1.Children.Add(new TextBlock
+            {
+                FontSize = 15,
+                Text = "带通高截止频率"
+            });
+            bandhighbox = new System.Windows.Controls.TextBox();
+            bandhighbox.Text = "100";
+            bandhighbox.FontSize = 15;
+            stackpanel1.Children.Add(bandhighbox);
+
             //去除尖峰按钮
             Button btn_clear_peak = new System.Windows.Controls.Button();
             btn_clear_peak.Content = "开始去除尖峰";
@@ -245,11 +256,11 @@ namespace Collect
             comboBox.DropDownOpened += ComboBox_DropDownOpened;
             stackpanel2.Children.Add(comboBox);
 
-            stackpanel2.Children.Add(new TextBlock
-            {
-                FontSize = 15,
-                Text = "放大倍数"
-            });
+            //stackpanel2.Children.Add(new TextBlock
+            //{
+            //    FontSize = 15,
+            //    Text = "放大倍数"
+            //});
 
 
             Button com_tcp = new System.Windows.Controls.Button();
@@ -325,6 +336,17 @@ namespace Collect
             Freqtextbox_filter.FontSize = 15;
             stackpanel4.Children.Add(Freqtextbox_filter);
 
+            stackpanel4.Children.Add(new TextBlock
+            {
+                FontSize = 15,
+                Text = "带通高截止频率"
+            });
+
+            Bandhighbox_offline = new System.Windows.Controls.TextBox();
+            Bandhighbox_offline.Text = "100";
+            Bandhighbox_offline.FontSize = 15;
+            stackpanel4.Children.Add(Bandhighbox_offline);
+
             //stackpanel4.Children.Add(new TextBlock
             //{
             //    FontSize = 15,
@@ -346,7 +368,7 @@ namespace Collect
             //EndFreqtextbox_filter_com.Text = "50";
             //EndFreqtextbox_filter_com.FontSize = 15;
             //stackpanel4.Children.Add(EndFreqtextbox_filter_com);
-            
+
             btn_filter = new System.Windows.Controls.Button();
             btn_filter.Content = "读取数据";
             btn_filter.FontSize = 15;
@@ -445,7 +467,8 @@ namespace Collect
         //开始滤波
         private void Btn_filter_Click(object sender, RoutedEventArgs e)
         {
-            data=eeg_filter.LoadExcelAs2DArray(Freqtextbox_filter.Text);
+            eeg_filter.lpCut=Convert.ToDouble(Bandhighbox_offline.Text);
+            data =eeg_filter.LoadExcelAs2DArray(Freqtextbox_filter.Text);
             //var button = sender as Button;
             //var content = button.Content.ToString();
             //if (content == "开始")
@@ -472,6 +495,7 @@ namespace Collect
         private TextBox Iptextbox;
         private TextBox PGAbox;
         private TextBox fcbox;
+        private TextBox bandhighbox;
         private System.Windows.Controls.TextBox Porttextbox;
         private ComboBox comboBox;
         private ComboBox comboBox1;
@@ -482,6 +506,7 @@ namespace Collect
         private TextBox Freqtextbox;
         private TextBox Timetextbox;
         private TextBox Freqtextbox_filter;
+        private TextBox Bandhighbox_offline;
         private TextBox Ordertextbox_filter;
         private TextBox EndFreqtextbox_filter_com;
         private StackPanel stackpanel1;
@@ -765,7 +790,7 @@ namespace Collect
             eeg.set_filter_params(Convert.ToDouble(fcbox.Text));
             bool sucess = eeg.TCP_Install_ecg(content, Iptextbox.Text, int.Parse(Porttextbox.Text));
             eeg.PGA = Convert.ToInt16(PGAbox.Text);
-           
+            eeg.lpCut= Convert.ToDouble(bandhighbox.Text);
             if (sucess)
             {
                 eeg.client.IsWri_start = true;

@@ -186,10 +186,10 @@ namespace Collect.Plot
         //采样率
         static double sampleRate = 1000;
 
-        static double hpCut = 0.5;   // 高通截止 0.5 Hz
+        public static double hpCut = 0.5;   // 高通截止 0.5 Hz
         static double hpA = Math.Exp(-2.0 * Math.PI * hpCut / sampleRate);
 
-        static double lpCut = 40.0;  // 低通截止 40 Hz
+        public  double lpCut = 40.0;  // 低通截止 40 Hz
         // 4阶 Butterworth 两段二阶的 Q（固定值）
         static double lpQ1 = 0.5411961;
         static double lpQ2 = 1.3065630;
@@ -207,8 +207,8 @@ namespace Collect.Plot
         int[] medCount = new int[8];
         int[] medIdx = new int[8];
 
-        BiquadLPF[] lpf1= Enumerable.Range(0, 8).Select(_ => new BiquadLPF(sampleRate, lpCut, lpQ1)).ToArray();
-        BiquadLPF[] lpf2= Enumerable.Range(0, 8).Select(_ => new BiquadLPF(sampleRate, lpCut, lpQ2)).ToArray();
+        BiquadLPF[] lpf1;
+        BiquadLPF[] lpf2;
         BiquadNotch[] notch1;
 
        
@@ -231,7 +231,8 @@ namespace Collect.Plot
             }
 
             notch1 = Enumerable.Range(0, chCount).Select(_ => new BiquadNotch(sampleRate, notchF0, notchQ)).ToArray();
-
+            lpf1 = Enumerable.Range(0, 8).Select(_ => new BiquadLPF(sampleRate, lpCut, lpQ1)).ToArray();
+            lpf2 = Enumerable.Range(0, 8).Select(_ => new BiquadLPF(sampleRate, lpCut, lpQ2)).ToArray();
             g_index_1 = 0;
         }
         /// <summary>
